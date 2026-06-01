@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCP Server Config Generator — Claude Code & Cursor (.mcp.json) | AI Coder Scope</title>
+<meta name="description" content="Free MCP server config generator. Pick servers (Postgres, GitHub, filesystem, fetch…), fill in the details, get a ready-to-paste .mcp.json for Claude Code or Cursor." />
+<meta name="keywords" content="mcp server config, mcp.json generator, claude code mcp setup, cursor mcp, model context protocol config, mcp generator" />
+<meta property="og:title" content="MCP Server Config Generator — Claude Code & Cursor" />
+<meta property="og:description" content="Pick MCP servers, fill the details, get a ready-to-paste config." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230D1117'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='%233FB950'>%3C%3E</text></svg>" />
+<style>
+  :root{--bg:#0D1117;--panel:#161B22;--border:#222a35;--text:#E6EDF3;--muted:#8B949E;--green:#3FB950;--blue:#58A6FF;--code:#0b0e14}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 64px}
+  header{display:flex;align-items:center;gap:12px;padding:8px 0 4px}
+  .logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0D1117,#1E2A44);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--green);font-family:monospace}
+  h1{font-size:30px;margin:18px 0 6px}
+  .sub{color:var(--muted);font-size:17px;margin:0 0 26px;max-width:720px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px}
+  .label{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .opts{display:flex;gap:8px;margin-bottom:8px}
+  .opt{border:1px solid var(--border);background:#0e131b;color:var(--text);border-radius:9px;padding:8px 12px;cursor:pointer;font-size:14px}
+  .opt.active{border-color:var(--green);background:rgba(63,185,80,.12);color:#b7f7c2}
+  .srv{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+  .srv.on{border-color:var(--green)}
+  .srvhead{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+  .srvhead input{margin-top:3px;accent-color:var(--green);width:16px;height:16px}
+  .srvhead b{font-size:14px}.srvhead small{color:var(--muted);display:block;font-size:12.5px}
+  .fields{margin:10px 0 2px 26px;display:none}
+  .srv.on .fields{display:block}
+  .fields label{font-size:12px;color:var(--muted);display:block;margin:8px 0 4px}
+  .field{width:100%;background:#0e131b;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;font-family:ui-monospace,Consolas,monospace}
+  .field:focus{outline:none;border-color:var(--green)}
+  .bar{display:flex;gap:10px;margin:0 0 12px}
+  .btn{border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;display:inline-block}
+  .btn.primary{background:var(--green);color:#06210d}
+  .btn.ghost{background:#0e131b;color:var(--text);border:1px solid var(--border)}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:14px;padding:16px;overflow:auto;max-height:480px;font-size:12.5px;white-space:pre;margin:0;font-family:ui-monospace,Consolas,monospace}
+  .hint{color:var(--muted);font-size:12.5px;margin-top:12px}
+  .cta{margin-top:24px;background:linear-gradient(135deg,#10131a,#1b2333);border:1px solid var(--border);border-radius:14px;padding:22px}
+  .cta h3{margin:0 0 8px}.cta p{color:var(--muted);margin:0 0 14px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  footer{color:var(--muted);font-size:13px;margin-top:34px;text-align:center}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#06210d;padding:10px 18px;border-radius:10px;font-weight:600;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo">&lt;&gt;</div><strong>AI Coder Scope</strong></header>
+
+  <h1>MCP Server Config Generator</h1>
+  <p class="sub">Give Claude Code or Cursor real capabilities — query your database, read GitHub, browse files, search the web. Pick the MCP servers you want, fill in the details, and copy a ready-to-paste config.</p>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <p class="label">Target</p>
+        <div class="opts" id="target"></div>
+        <p class="label" style="margin-top:16px">Pick servers</p>
+        <div id="servers"></div>
+      </div>
+    </div>
+    <div>
+      <div class="bar">
+        <button class="btn primary" id="copy">Copy</button>
+        <button class="btn ghost" id="download">Download</button>
+      </div>
+      <pre id="preview"></pre>
+      <p class="hint" id="hint"></p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h3>Want the full agent setup, not just MCP?</h3>
+    <p>MCP is one piece. The Agentic Coding Starter Kit adds CLAUDE.md / Cursor rules, subagents, slash commands and hooks — the whole config a senior engineer would ship.</p>
+    <div class="row">
+      <a class="btn primary" href="https://alphaletgo.gumroad.com/l/agentic-coding-kit" target="_blank" rel="noopener">Get the Starter Kit →</a>
+      <a class="btn ghost" href="https://tools.aicoderscope.com" rel="noopener">Config generator</a>
+      <a class="btn ghost" href="https://apicost.aicoderscope.com" rel="noopener">API cost calculator</a>
+    </div>
+  </div>
+
+  <footer>Built by <a href="https://github.com/devloadout" target="_blank" rel="noopener">DevLoadout</a> · Honest AI coding tool reviews at <a href="https://aicoderscope.com" rel="noopener">AICoderScope</a> · Free to use</footer>
+</div>
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+const TARGETS=[
+  {id:"claude", label:"Claude Code (.mcp.json)", file:".mcp.json",
+   hint:"Save as .mcp.json in your project root, then restart Claude Code and run /mcp to confirm each server connected."},
+  {id:"cursor", label:"Cursor (mcp.json)", file:"mcp.json",
+   hint:"Save to .cursor/mcp.json (project) or ~/.cursor/mcp.json (global), then reload Cursor and check MCP settings."}
+];
+// Canonical reference MCP servers. Package names/availability evolve — verify at github.com/modelcontextprotocol/servers
+const SERVERS=[
+  {id:"filesystem", name:"Filesystem", desc:"Read/write files in a folder you scope.",
+   base:["-y","@modelcontextprotocol/server-filesystem"],
+   args:[{key:"path", ph:"C:\\\\path\\\\to\\\\folder"}]},
+  {id:"github", name:"GitHub", desc:"Read issues, PRs and code across repos.",
+   base:["-y","@modelcontextprotocol/server-github"],
+   env:[{key:"GITHUB_PERSONAL_ACCESS_TOKEN", ph:"ghp_..."}]},
+  {id:"postgres", name:"PostgreSQL", desc:"Inspect schema and query data (use a read-only role).",
+   base:["-y","@modelcontextprotocol/server-postgres"],
+   args:[{key:"connectionString", ph:"postgresql://user:pass@localhost:5432/dbname"}]},
+  {id:"sqlite", name:"SQLite", desc:"Query a local SQLite database file.",
+   base:["-y","@modelcontextprotocol/server-sqlite","--db-path"],
+   args:[{key:"dbPath", ph:"C:\\\\path\\\\to\\\\database.sqlite"}]},
+  {id:"brave-search", name:"Brave Search", desc:"Let the agent search the web.",
+   base:["-y","@modelcontextprotocol/server-brave-search"],
+   env:[{key:"BRAVE_API_KEY", ph:"your-brave-api-key"}]},
+  {id:"fetch", name:"Fetch (URL)", desc:"Fetch and read a web page.",
+   base:["-y","@modelcontextprotocol/server-fetch"]},
+  {id:"puppeteer", name:"Puppeteer", desc:"Drive a headless browser (screenshots, scraping).",
+   base:["-y","@modelcontextprotocol/server-puppeteer"]},
+  {id:"memory", name:"Memory", desc:"Persistent knowledge-graph memory across sessions.",
+   base:["-y","@modelcontextprotocol/server-memory"]},
+  {id:"slack", name:"Slack", desc:"Read/post in Slack channels.",
+   base:["-y","@modelcontextprotocol/server-slack"],
+   env:[{key:"SLACK_BOT_TOKEN", ph:"xoxb-..."},{key:"SLACK_TEAM_ID", ph:"T01234567"}]}
+];
+
+const state={target:"claude", on:{}, vals:{}};
+const $=id=>document.getElementById(id);
+
+function chips(){
+  const c=$("target"); c.innerHTML="";
+  TARGETS.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="opt"+(state.target===t.id?" active":"");
+    b.textContent=t.label;
+    b.onclick=()=>{state.target=t.id;chips();render();};
+    c.appendChild(b);
+  });
+}
+function srvList(){
+  const c=$("servers"); c.innerHTML="";
+  SERVERS.forEach(s=>{
+    const on=!!state.on[s.id];
+    const div=document.createElement("div");
+    div.className="srv"+(on?" on":"");
+    let fields="";
+    (s.args||[]).forEach(f=>{
+      fields+=`<label>${f.key}</label><input class="field" data-s="${s.id}" data-t="arg" data-k="${f.key}" placeholder="${f.ph}" value="${state.vals[s.id+'.'+f.key]||''}">`;
+    });
+    (s.env||[]).forEach(f=>{
+      fields+=`<label>env · ${f.key}</label><input class="field" data-s="${s.id}" data-t="env" data-k="${f.key}" placeholder="${f.ph}" value="${state.vals[s.id+'.'+f.key]||''}">`;
+    });
+    if(!fields) fields=`<div style="color:var(--muted);font-size:12.5px">No configuration needed.</div>`;
+    div.innerHTML=`<label class="srvhead"><input type="checkbox" ${on?"checked":""} data-srv="${s.id}"><span><b>${s.name}</b><small>${s.desc}</small></span></label><div class="fields">${fields}</div>`;
+    c.appendChild(div);
+  });
+  c.querySelectorAll("[data-srv]").forEach(cb=>{
+    cb.onchange=e=>{state.on[e.target.dataset.srv]=e.target.checked;srvList();render();};
+  });
+  c.querySelectorAll(".field").forEach(inp=>{
+    inp.oninput=e=>{state.vals[e.target.dataset.s+'.'+e.target.dataset.k]=e.target.value;render();};
+  });
+}
+
+function build(){
+  const servers={};
+  SERVERS.forEach(s=>{
+    if(!state.on[s.id]) return;
+    const args=[...s.base];
+    (s.args||[]).forEach(f=>{
+      const v=(state.vals[s.id+'.'+f.key]||"").trim();
+      args.push(v||("<<"+f.key+">>"));
+    });
+    const entry={command:"npx", args};
+    if(s.env&&s.env.length){
+      entry.env={};
+      s.env.forEach(f=>{ entry.env[f.key]=(state.vals[s.id+'.'+f.key]||"").trim()||("<<"+f.key+">>"); });
+    }
+    servers[s.id]=entry;
+  });
+  return JSON.stringify({mcpServers:servers}, null, 2)+"\n";
+}
+
+function render(){
+  $("preview").textContent=build();
+  const any=Object.values(state.on).some(Boolean);
+  const t=TARGETS.find(t=>t.id===state.target);
+  $("hint").textContent=any ? t.hint+" Replace any <<placeholder>> with your real value."
+                            : "Select one or more servers on the left to build your config.";
+}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1400);}
+
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText(build());toast("Copied!");}catch{toast("Press Ctrl+C");}};
+$("download").onclick=()=>{
+  const t=TARGETS.find(t=>t.id===state.target);
+  const blob=new Blob([build()],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=t.file;a.click();toast("Downloaded "+t.file);
+};
+
+chips(); srvList(); render();
+</script>
+</body>
+</html>
